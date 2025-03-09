@@ -10,6 +10,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 app = FastAPI()
@@ -85,16 +86,25 @@ logreg_model = Pipeline([
     ("classifier", LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42))
 ])
 
+# Add XGBoost model
+xgb_model = Pipeline([
+    ("preprocessor", preprocessor),
+    ("classifier", XGBClassifier(n_estimators=50, max_depth=3, subsample=0.8, learning_rate=0.1, random_state=42, use_label_encoder=False, eval_metric='logloss'))
+])
+
+# Train all models
 rf_model.fit(X_train, y_train)
 logreg_model.fit(X_train, y_train)
+xgb_model.fit(X_train, y_train)
 
 # Store trained models in memory
 models = {
     "RandomForest": rf_model,
-    "LogisticRegression": logreg_model
+    "LogisticRegression": logreg_model,
+    "XGBoost": xgb_model
 }
 
-# Compute model evaluation metrics (for other endpoints)
+# Compute model evaluation metrics
 metrics = {}
 for name, model in models.items():
     y_pred = model.predict(X_test)
@@ -145,13 +155,19 @@ def predict(input_data: PredictionInput):
         print("Error in prediction:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
-# Other endpoints (get_models, get_model_details) can remain as-is
+# Get list of available models
 @app.get("/models")
 def get_models():
     return [{"id": key, "name": key, "accuracy": value["accuracy"]} for key, value in metrics.items()]
 
+# Get detailed model metrics
 @app.get("/models/{model_id}")
 def get_model_details(model_id: str):
     if model_id not in metrics:
         raise HTTPException(status_code=404, detail="Model not found")
     return metrics[model_id]
+
+# Health check endpoint
+@app.get("/")
+def read_root():
+    return {"status": "API is running", "models_available": list(models.keys())}

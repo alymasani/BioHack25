@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,18 +11,40 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { predictModel } from "@/lib/api";
 
-// Define features for models
+// Define features for all models
 const modelFeatures = {
   "RandomForest": [
-    { name: "Academic Pressure", type: "slider", min: 0, max: 10 },
-    { name: "Work/Study Hours", type: "slider", min: 0, max: 40 },
-    { name: "Financial Stress", type: "slider", min: 0, max: 10 },
-    { name: "Dietary Habits", type: "slider", min: 0, max: 10 },
-    { name: "Sleep Duration", type: "slider", min: 4, max: 10 },
-    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"] },
-    { name: "Suicidal Thoughts", type: "select", options: ["Yes", "No"] },
-    { name: "CGPA", type: "slider", min: 2, max: 4 },
-    { name: "Gender", type: "select", options: ["Male", "Female", "Other"] }
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
+  ],
+  "LogisticRegression": [
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
+  ],
+  "XGBoost": [
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
   ]
 };
 
@@ -38,19 +59,69 @@ export function ModelPrediction({ id }: { id: string }) {
   const features = modelFeatures[id as keyof typeof modelFeatures] || [];
   
   // Initialize form data with default values
-  useState(() => {
+  useEffect(() => {
     const initialData: Record<string, any> = {};
     features.forEach(feature => {
       if (feature.type === "slider") {
         initialData[feature.name] = feature.min;
+      } else if (feature.type === "select" && feature.options && feature.options.length > 0) {
+        initialData[feature.name] = feature.options[0];
       }
     });
     setFormData(initialData);
-  });
+    
+    // Reset result when model changes
+    setResult(null);
+  }, [id, features]);
 
   const handleInputChange = (name: string, value: any) => {
     console.log(`✏️ Input Changed: ${name} ->`, value);
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Convert value to the appropriate type and validate
+  const validateAndConvert = (value: any, feature: any): any => {
+    // Handle null/undefined values
+    if (value === null || value === undefined) {
+      console.warn(`Missing value for ${feature.name}, using default`);
+      
+      if (feature.type === "slider") {
+        return feature.min;
+      } else if (feature.type === "select" && feature.options && feature.options.length > 0) {
+        return feature.apiValues?.[feature.options[0]] ?? 0;
+      }
+      return 0;
+    }
+    
+    // Handle categorical values using the apiValues mapping
+    if (feature.apiValues && typeof feature.apiValues === 'object') {
+      const mappedValue = feature.apiValues[value];
+      if (mappedValue !== undefined) {
+        value = mappedValue;
+      } else {
+        console.warn(`No mapping found for ${feature.name}: ${value}, using default 0`);
+        return 0;
+      }
+    }
+    
+    // Convert to the appropriate numeric type
+    if (feature.dataType === 'float') {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        console.error(`Invalid float value for ${feature.name}: ${value}, using default 0`);
+        return 0.0;
+      }
+      return numValue;
+    } else if (feature.dataType === 'int') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) {
+        console.error(`Invalid int value for ${feature.name}: ${value}, using default 0`);
+        return 0;
+      }
+      return numValue;
+    }
+    
+    return value;
   };
 
   const handlePredict = async () => {
@@ -80,10 +151,20 @@ export function ModelPrediction({ id }: { id: string }) {
     }, 200);
 
     try {
-      console.log("📡 Sending API request with:", { model_id: id, features: formData });
+      // Build a payload that exactly matches what the backend expects
+      const apiPayload: Record<string, any> = {};
+      
+      // Process each feature with proper validation and conversion
+      features.forEach(feature => {
+        const value = validateAndConvert(formData[feature.name], feature);
+        apiPayload[feature.name] = value;
+      });
+      
+      console.log("📡 Sending API request with:", { model_id: id, features: apiPayload });
+      console.log("Final API payload:", JSON.stringify(apiPayload));
 
       // Make the API call
-      const prediction = await predictModel(id, formData);
+      const prediction = await predictModel(id, apiPayload);
       console.log("✅ Prediction Response:", prediction);
 
       // Set result and complete progress
@@ -99,7 +180,7 @@ export function ModelPrediction({ id }: { id: string }) {
       console.error("❌ Prediction Error:", error);
       toast({ 
         title: "Prediction Failed", 
-        description: "Check browser console for details", 
+        description: "An error occurred during prediction. Check console for details.", 
         variant: "destructive" 
       });
     } finally {
@@ -111,7 +192,7 @@ export function ModelPrediction({ id }: { id: string }) {
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>Run Prediction</CardTitle>
+        <CardTitle>Run Prediction with {id}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {features.map((feature) => (
@@ -124,16 +205,23 @@ export function ModelPrediction({ id }: { id: string }) {
                   id={feature.name}
                   min={feature.min}
                   max={feature.max}
-                  step={1}
+                  step={0.1}
                   value={[formData[feature.name] || feature.min]}
                   onValueChange={(value) => handleInputChange(feature.name, value[0])}
                 />
-                <span className="text-sm font-medium">{formData[feature.name] || feature.min}</span>
+                <div className="flex justify-between">
+                  <span className="text-sm">{feature.min}</span>
+                  <span className="text-sm font-medium">{formData[feature.name]?.toFixed(1) || feature.min}</span>
+                  <span className="text-sm">{feature.max}</span>
+                </div>
               </div>
             )}
 
             {feature.type === "select" && (
-              <Select value={formData[feature.name] || ""} onValueChange={(value) => handleInputChange(feature.name, value)}>
+              <Select 
+                value={formData[feature.name] || ""} 
+                onValueChange={(value) => handleInputChange(feature.name, value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={`Select ${feature.name}`} />
                 </SelectTrigger>
