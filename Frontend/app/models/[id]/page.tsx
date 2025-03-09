@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-export default function ModelDetailsPage({ params }: { params: { id: string } }) {
+export default async function ModelDetailsPage({ params }: { params: { id: string } }) {
+  // Ensure params is resolved before accessing its properties
+  const resolvedParams = await Promise.resolve(params)
+  const { id } = resolvedParams
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6">
@@ -19,11 +23,10 @@ export default function ModelDetailsPage({ params }: { params: { id: string } })
           <h1 className="text-3xl font-bold tracking-tight">Model Details</h1>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          <ModelDetails id={params.id} />
-          <ModelPrediction id={params.id} />
+          <ModelDetails id={id} />
+          <ModelPrediction id={id} />
         </div>
       </div>
     </DashboardLayout>
   )
 }
-

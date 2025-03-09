@@ -3,142 +3,79 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { BarChart, LineChart, ChartContainer, ChartTooltip } from "@/components/ui/chart"
-import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line } from "recharts"
+import {   ChartContainer, ChartTooltip } from "@/components/ui/chart"
+import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, LineChart} from "recharts"
+import { BarChart } from "recharts";
+
 
 // Mock data for model details
 const modelDetails = {
   "1": {
     name: "Random Forest Classifier",
-    accuracy: 0.87,
-    precision: 0.85,
-    recall: 0.83,
-    f1: 0.84,
+    accuracy: 0.89,
+    precision: 0.89,
+    recall: 0.89,
+    f1: 0.91,
     date: "2023-12-15",
-    features: ["Age", "Gender", "PHQ-9 Score", "Sleep Quality", "Physical Activity", "Social Support"],
+    features:  [
+      'Academic Pressure', 'Work/Study Hours', 'Financial Stress',
+      'Dietary Habits', 'Sleep Duration', 'Family History of Mental Illness',
+      'Have you ever had suicidal thoughts ?', 'CGPA', 'Gender'
+  ],
     description:
       "Ensemble learning method for classification that operates by constructing multiple decision trees during training and outputting the class that is the mode of the classes of the individual trees.",
     performanceHistory: [
-      { version: "v1", accuracy: 0.78, date: "2023-10-15" },
-      { version: "v2", accuracy: 0.82, date: "2023-11-01" },
-      { version: "v3", accuracy: 0.87, date: "2023-12-15" },
+      { version: "v1", accuracy: 0.82, date: "2023-10-15" },
+      { version: "v2", accuracy: 0.86, date: "2023-11-01" },
+      { version: "v3", accuracy: 0.89, date: "2023-12-15" },
     ],
     featureImportance: [
-      { name: "PHQ-9 Score", value: 0.35 },
-      { name: "Sleep Quality", value: 0.25 },
-      { name: "Social Support", value: 0.18 },
-      { name: "Physical Activity", value: 0.12 },
-      { name: "Age", value: 0.07 },
-      { name: "Gender", value: 0.03 },
-    ],
+      { "name": "Academic_Pressure", "value": 0.38 },
+      { "name": "Suicidal Thoughts", "value": 0.33 },
+      { "name": "Study Hours", "value": 0.07 },
+      { "name": "Sleep Hours", "value": 0.07 },
+      { "name": "CGPA", "value": 0.05 },
+      { "name": "Financial Stress", "value": 0.05 }
+    ]
+    ,
     confusionMatrix: {
-      truePositive: 85,
-      falsePositive: 15,
-      trueNegative: 80,
-      falseNegative: 20,
+      truePositive: 15477,
+      falsePositive: 1472,
+      trueNegative: 10093,
+      falseNegative: 859,
     },
   },
   "2": {
-    name: "Logistic Regression",
-    accuracy: 0.82,
-    precision: 0.8,
-    recall: 0.79,
-    f1: 0.79,
-    date: "2023-11-20",
-    features: ["Age", "Gender", "PHQ-9 Score", "Sleep Quality", "Physical Activity"],
-    description:
-      "Statistical model that uses a logistic function to model a binary dependent variable. In this case, it predicts the probability of depression based on input features.",
-    performanceHistory: [
-      { version: "v1", accuracy: 0.75, date: "2023-09-10" },
-      { version: "v2", accuracy: 0.82, date: "2023-11-20" },
-    ],
-    featureImportance: [
-      { name: "PHQ-9 Score", value: 0.42 },
-      { name: "Sleep Quality", value: 0.28 },
-      { name: "Physical Activity", value: 0.15 },
-      { name: "Age", value: 0.1 },
-      { name: "Gender", value: 0.05 },
-    ],
-    confusionMatrix: {
-      truePositive: 78,
-      falsePositive: 22,
-      trueNegative: 75,
-      falseNegative: 25,
-    },
-  },
-  "3": {
-    name: "Support Vector Machine",
-    accuracy: 0.85,
-    precision: 0.84,
-    recall: 0.82,
-    f1: 0.83,
-    date: "2024-01-10",
-    features: ["Age", "Gender", "PHQ-9 Score", "Sleep Quality", "Physical Activity", "Social Support", "Stress Level"],
-    description:
-      "Supervised learning model that analyzes data for classification and regression analysis. It uses hyperplanes to separate different classes in high-dimensional space.",
-    performanceHistory: [
-      { version: "v1", accuracy: 0.79, date: "2023-11-05" },
-      { version: "v2", accuracy: 0.85, date: "2024-01-10" },
-    ],
-    featureImportance: [
-      { name: "PHQ-9 Score", value: 0.38 },
-      { name: "Stress Level", value: 0.22 },
-      { name: "Sleep Quality", value: 0.18 },
-      { name: "Social Support", value: 0.12 },
-      { name: "Physical Activity", value: 0.06 },
-      { name: "Age", value: 0.03 },
-      { name: "Gender", value: 0.01 },
-    ],
-    confusionMatrix: {
-      truePositive: 82,
-      falsePositive: 18,
-      trueNegative: 78,
-      falseNegative: 22,
-    },
-  },
-  "4": {
-    name: "Neural Network",
-    accuracy: 0.89,
-    precision: 0.88,
-    recall: 0.87,
-    f1: 0.87,
-    date: "2024-02-05",
-    features: [
-      "Age",
-      "Gender",
-      "PHQ-9 Score",
-      "Sleep Quality",
-      "Physical Activity",
-      "Social Support",
-      "Stress Level",
-      "Diet Quality",
-      "Screen Time",
-    ],
-    description:
-      "Deep learning model with multiple layers for feature extraction and classification. This neural network has been trained to identify patterns associated with depression.",
-    performanceHistory: [
-      { version: "v1", accuracy: 0.81, date: "2023-12-10" },
-      { version: "v2", accuracy: 0.85, date: "2024-01-15" },
-      { version: "v3", accuracy: 0.89, date: "2024-02-05" },
-    ],
-    featureImportance: [
-      { name: "PHQ-9 Score", value: 0.32 },
-      { name: "Stress Level", value: 0.2 },
-      { name: "Sleep Quality", value: 0.15 },
-      { name: "Social Support", value: 0.12 },
-      { name: "Screen Time", value: 0.08 },
-      { name: "Physical Activity", value: 0.06 },
-      { name: "Diet Quality", value: 0.04 },
-      { name: "Age", value: 0.02 },
-      { name: "Gender", value: 0.01 },
-    ],
-    confusionMatrix: {
-      truePositive: 88,
-      falsePositive: 12,
-      trueNegative: 85,
-      falseNegative: 15,
-    },
-  },
+  name: "Logistic Regression (with PCA)",
+  accuracy: 0.8328,
+  precision: 0.83,
+  recall: 0.83,
+  f1: 0.8612,
+  date: "2023-11-20",
+  features: ["Age", "Gender", "PHQ-9 Score", "Sleep Quality", "Physical Activity"],
+  description:
+    "Statistical model that uses a logistic function combined with PCA to model a binary dependent variable. Test Results (Threshold=0.395): Accuracy: 0.8328, F1 Score: 0.8612. Classification Report: For class 0 – precision: 0.82, recall: 0.76, f1-score: 0.79 (support: 2313); for class 1 – precision: 0.84, recall: 0.89, f1-score: 0.86 (support: 3268); Overall accuracy: 0.83.",
+  performanceHistory: [
+    { version: "v1", accuracy: 0.75, date: "2023-09-10" },
+    { version: "v2", accuracy: 0.8328, date: "2023-11-20" }
+  ],
+  featureImportance: [
+    { name: "PHQ-9 Score", value: 0.42 },
+    { name: "Sleep Quality", value: 0.28 },
+    { name: "Physical Activity", value: 0.15 },
+    { name: "Age", value: 0.1 },
+    { name: "Gender", value: 0.05 }
+  ],
+  
+  confusionMatrix: {
+    truePositive: 2895,
+    falsePositive: 560,  // Derived from precision: 0.84 = TP/(TP+FP)
+    trueNegative: 1753,  // Derived from overall accuracy and total samples
+    falseNegative: 373
+  }
+}
+
+  
 }
 
 export function ModelDetails({ id }: { id: string }) {

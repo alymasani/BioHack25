@@ -10,8 +10,8 @@ const models = [
   {
     id: "1",
     name: "Random Forest Classifier",
-    accuracy: 0.87,
-    date: "2023-12-15",
+    accuracy: 0.89,
+    date: "2025-03-08",
     description: "Ensemble learning method for classification that operates by constructing multiple decision trees.",
   },
   {
@@ -21,20 +21,7 @@ const models = [
     date: "2023-11-20",
     description: "Statistical model that uses a logistic function to model a binary dependent variable.",
   },
-  {
-    id: "3",
-    name: "Support Vector Machine",
-    accuracy: 0.85,
-    date: "2024-01-10",
-    description: "Supervised learning model that analyzes data for classification and regression analysis.",
-  },
-  {
-    id: "4",
-    name: "Neural Network",
-    accuracy: 0.89,
-    date: "2024-02-05",
-    description: "Deep learning model with multiple layers for feature extraction and classification.",
-  },
+ 
 ]
 
 export function ModelsList() {
