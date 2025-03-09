@@ -1,38 +1,54 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-// Mock data for mosaic plots
+// Hardcoded real data from Python's Mosaic Plot analysis
 const mosaicData = {
   gender_depression: {
     title: "Gender vs Depression Status",
-    description: "Mosaic plot showing the relationship between gender and depression status",
+    description:
+      "Mosaic plot showing the relationship between gender and depression status",
     categories: [
-      { name: "Male", depressed: 120, nonDepressed: 230 },
-      { name: "Female", depressed: 180, nonDepressed: 210 },
-      { name: "Other", depressed: 15, nonDepressed: 10 },
+      { name: "Male", depressed: 9115, nonDepressed: 6432 },
+      { name: "Female", depressed: 7221, nonDepressed: 5133 },
     ],
   },
-  age_depression: {
-    title: "Age Group vs Depression Status",
-    description: "Mosaic plot showing the relationship between age groups and depression status",
+  sleep_depression: {
+    title: "Sleep Duration vs Depression Status",
+    description:
+      "Mosaic plot showing the relationship between sleep duration and depression status",
     categories: [
-      { name: "18-25", depressed: 85, nonDepressed: 95 },
-      { name: "26-40", depressed: 110, nonDepressed: 150 },
-      { name: "41-60", depressed: 75, nonDepressed: 130 },
-      { name: "60+", depressed: 45, nonDepressed: 75 },
+      { name: "Less than 5 hours", depressed: 5361, nonDepressed: 2949 },
+      { name: "5-6 hours", depressed: 3517, nonDepressed: 2666 },
+      { name: "7-8 hours", depressed: 4371, nonDepressed: 2975 },
+      { name: "More than 8 hours", depressed: 3078, nonDepressed: 2966 },
     ],
   },
-  education_depression: {
-    title: "Education Level vs Depression Status",
-    description: "Mosaic plot showing the relationship between education level and depression status",
+  academic_pressure_depression: {
+    title: "Academic Pressure vs Depression Status",
+    description:
+      "Mosaic plot showing the relationship between academic pressure and depression status",
     categories: [
-      { name: "High School", depressed: 95, nonDepressed: 85 },
-      { name: "Bachelor's", depressed: 120, nonDepressed: 160 },
-      { name: "Master's", depressed: 70, nonDepressed: 130 },
-      { name: "PhD", depressed: 30, nonDepressed: 75 },
+      { name: "0", depressed: 4, nonDepressed: 5 },
+      { name: "1", depressed: 932, nonDepressed: 3869 },
+      { name: "2", depressed: 1566, nonDepressed: 2612 },
+      { name: "3", depressed: 4489, nonDepressed: 2973 },
+      { name: "4", depressed: 3925, nonDepressed: 1230 },
+      { name: "5", depressed: 5420, nonDepressed: 876 },
     ],
   },
 }
@@ -59,11 +75,13 @@ export function MosaicGraphs() {
   const { totalDepressed, totalNonDepressed, grandTotal, categoryTotals } = calculateTotals()
 
   return (
-    <Card className="col-span-1">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+    <Card className="col-span-1 shadow-lg">
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div>
           <CardTitle>Mosaic Plots</CardTitle>
-          <CardDescription>Visualizing relationships between categorical variables</CardDescription>
+          <CardDescription>
+            Visualizing relationships between categorical variables
+          </CardDescription>
         </div>
         <Select value={selectedVariable} onValueChange={setSelectedVariable}>
           <SelectTrigger className="w-[220px]">
@@ -71,89 +89,39 @@ export function MosaicGraphs() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="gender_depression">Gender vs Depression</SelectItem>
-            <SelectItem value="age_depression">Age Group vs Depression</SelectItem>
-            <SelectItem value="education_depression">Education vs Depression</SelectItem>
+            <SelectItem value="sleep_depression">Sleep Duration vs Depression</SelectItem>
+            <SelectItem value="academic_pressure_depression">Academic Pressure vs Depression</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">{data.title}</h3>
-          <p className="text-sm text-muted-foreground">{data.description}</p>
-
-          <div className="h-[300px] w-full border rounded-md p-4">
-            <div className="flex h-full w-full flex-col">
-              {/* Render mosaic plot */}
+        <div className="space-y-6">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold">{data.title}</h3>
+            <p className="text-sm text-muted-foreground">{data.description}</p>
+          </div>
+          <div className="relative h-[300px] w-full bg-gray-100 dark:bg-gray-800 border rounded-md overflow-hidden">
+            <div className="absolute inset-0 flex">
               {data.categories.map((category, index) => {
                 const categoryWidth = (categoryTotals[index] / grandTotal) * 100
                 const depressedHeight = (category.depressed / categoryTotals[index]) * 100
                 const nonDepressedHeight = 100 - depressedHeight
 
                 return (
-                  <div key={category.name} className="flex h-full" style={{ width: `${categoryWidth}%` }}>
-                    <div className="flex flex-col w-full">
-                      <div
-                        className="bg-red-500/80 dark:bg-red-700/80 relative"
-                        style={{ height: `${depressedHeight}%` }}
-                      >
-                        {depressedHeight > 10 && (
-                          <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-medium">
-                            {category.depressed}
-                          </div>
-                        )}
-                      </div>
-                      <div
-                        className="bg-green-500/80 dark:bg-green-700/80 relative"
-                        style={{ height: `${nonDepressedHeight}%` }}
-                      >
-                        {nonDepressedHeight > 10 && (
-                          <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-medium">
-                            {category.nonDepressed}
-                          </div>
-                        )}
-                      </div>
+                  <div key={category.name} className="flex flex-col transition-all duration-300" style={{ width: `${categoryWidth}%` }}>
+                    <div className="bg-red-500 dark:bg-red-700 flex items-center justify-center text-white text-xs font-medium transition-all duration-300 hover:opacity-90" style={{ height: `${depressedHeight}%` }}>
+                      {depressedHeight > 12 && category.depressed}
+                    </div>
+                    <div className="bg-green-500 dark:bg-green-700 flex items-center justify-center text-white text-xs font-medium transition-all duration-300 hover:opacity-90" style={{ height: `${nonDepressedHeight}%` }}>
+                      {nonDepressedHeight > 12 && category.nonDepressed}
                     </div>
                   </div>
                 )
               })}
             </div>
-
-            {/* X-axis labels */}
-            <div className="flex w-full mt-2">
-              {data.categories.map((category, index) => {
-                const categoryWidth = (categoryTotals[index] / grandTotal) * 100
-
-                return (
-                  <div
-                    key={category.name}
-                    className="flex justify-center text-xs"
-                    style={{ width: `${categoryWidth}%` }}
-                  >
-                    {category.name}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 dark:bg-red-700 rounded-sm"></div>
-              <span className="text-xs">Depressed ({totalDepressed})</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 dark:bg-green-700 rounded-sm"></div>
-              <span className="text-xs">Non-Depressed ({totalNonDepressed})</span>
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground">
-            <p>* Width of each column is proportional to the category size</p>
-            <p>* Height of each section represents the proportion within the category</p>
           </div>
         </div>
       </CardContent>
     </Card>
   )
 }
-

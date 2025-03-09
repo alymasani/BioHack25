@@ -1,133 +1,147 @@
 "use client"
 
+import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AreaChart, ChartContainer, ChartTooltip } from "@/components/ui/chart"
-import { XAxis, YAxis, CartesianGrid, Tooltip, Area } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-// Mock data for distribution plots
-const distributionData = {
-  phq9: Array.from({ length: 28 }, (_, i) => ({
-    score: i,
-    frequency: Math.floor(Math.random() * 100) * (i < 5 ? 0.5 : i < 10 ? 1.5 : i < 15 ? 2 : i < 20 ? 1 : 0.3),
-  })),
-  sleep: Array.from({ length: 11 }, (_, i) => ({
-    score: i,
-    frequency: Math.floor(Math.random() * 100) * (i < 3 ? 0.8 : i < 6 ? 1.2 : i < 8 ? 1.5 : 0.7),
-  })),
-  stress: Array.from({ length: 11 }, (_, i) => ({
-    score: i,
-    frequency: Math.floor(Math.random() * 100) * (i < 3 ? 0.6 : i < 5 ? 1 : i < 8 ? 1.8 : 0.9),
-  })),
+// Hardcoded data extracted from CSV analysis
+const lineChartData = {
+  academic_pressure: [
+    { academicPressure: 0, averageDepression: 0.444 },
+    { academicPressure: 1, averageDepression: 0.194 },
+    { academicPressure: 2, averageDepression: 0.375 },
+    { academicPressure: 3, averageDepression: 0.602 },
+    { academicPressure: 4, averageDepression: 0.761 },
+    { academicPressure: 5, averageDepression: 0.861 },
+  ],
+  sleep: [
+    { sleep: 4.0, averageDepression: 0.645 },
+    { sleep: 5.5, averageDepression: 0.569 },
+    { sleep: 7.5, averageDepression: 0.595 },
+    { sleep: 9.0, averageDepression: 0.509 },
+  ],
+  hours: [
+    { hours: 0, averageDepression: 0.355 },
+    { hours: 1, averageDepression: 0.403 },
+    { hours: 2, averageDepression: 0.438 },
+    { hours: 3, averageDepression: 0.474 },
+    { hours: 4, averageDepression: 0.505 },
+    { hours: 5, averageDepression: 0.545 },
+    { hours: 6, averageDepression: 0.573 },
+    { hours: 7, averageDepression: 0.588 },
+    { hours: 8, averageDepression: 0.625 },
+    { hours: 9, averageDepression: 0.599 },
+    { hours: 10, averageDepression: 0.704 },
+    { hours: 11, averageDepression: 0.678 },
+    { hours: 12, averageDepression: 0.684 },
+  ],
 }
 
 const distributionLabels = {
-  phq9: {
-    title: "PHQ-9 Score Distribution",
-    description: "Distribution of depression severity scores",
-    xLabel: "PHQ-9 Score",
-    yLabel: "Frequency",
-    thresholds: [
-      { value: 5, label: "Mild" },
-      { value: 10, label: "Moderate" },
-      { value: 15, label: "Moderately Severe" },
-      { value: 20, label: "Severe" },
-    ],
+  academic_pressure: {
+    title: "Academic Pressure vs Depression",
+    description: "Line chart showing mean depression scores by academic pressure",
+    xLabel: "Academic Pressure",
+    yLabel: "Average Depression Score",
   },
   sleep: {
-    title: "Sleep Quality Distribution",
-    description: "Distribution of sleep quality scores",
-    xLabel: "Sleep Quality Score",
-    yLabel: "Frequency",
-    thresholds: [
-      { value: 3, label: "Poor" },
-      { value: 7, label: "Good" },
-    ],
+    title: "Sleep vs Depression",
+    description: "Line chart showing mean depression scores by sleep hours",
+    xLabel: "Sleep (Hours)",
+    yLabel: "Average Depression Score",
   },
-  stress: {
-    title: "Stress Level Distribution",
-    description: "Distribution of stress level scores",
-    xLabel: "Stress Level",
-    yLabel: "Frequency",
-    thresholds: [
-      { value: 3, label: "Low" },
-      { value: 7, label: "High" },
-    ],
+  hours: {
+    title: "Study Hours vs Depression",
+    description: "Line chart showing mean depression scores by daily study hours",
+    xLabel: "Study Hours/Day",
+    yLabel: "Average Depression Score",
   },
 }
 
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+        <p className="text-sm font-medium">{`${payload[0].name}: ${label}`}</p>
+        <p className="text-sm text-primary">
+          {`Depression Score: ${payload[0].value.toFixed(3)}`}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function DistributionPlots() {
   return (
-    <Card className="col-span-1">
+    <Card className="col-span-1 shadow-lg">
       <CardHeader>
         <CardTitle>Distribution Plots</CardTitle>
-        <CardDescription>Distribution of key metrics across the dataset</CardDescription>
+        <CardDescription>Line charts of key metrics vs depression scores</CardDescription>
       </CardHeader>
+
       <CardContent>
-        <Tabs defaultValue="phq9">
+        <Tabs defaultValue="academic_pressure">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="phq9">PHQ-9</TabsTrigger>
+            <TabsTrigger value="academic_pressure">Academic Pressure</TabsTrigger>
             <TabsTrigger value="sleep">Sleep</TabsTrigger>
-            <TabsTrigger value="stress">Stress</TabsTrigger>
+            <TabsTrigger value="hours">Study Hours</TabsTrigger>
           </TabsList>
-          {Object.entries(distributionData).map(([key, data]) => {
-            const labels = distributionLabels[key as keyof typeof distributionLabels]
+
+          {Object.entries(lineChartData).map(([key, data]) => {
+            const labels = distributionLabels[key];
+            const xAxisKey =
+              key === "academic_pressure" ? "academicPressure" : key === "sleep" ? "sleep" : "hours";
 
             return (
               <TabsContent key={key} value={key} className="space-y-4 pt-4">
-                <div className="h-[250px]">
-                  <ChartContainer>
-                    <AreaChart data={data}>
-                      <defs>
-                        <linearGradient id={`color-${key}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="score" label={{ value: labels.xLabel, position: "insideBottom", offset: -5 }} />
-                      <YAxis label={{ value: labels.yLabel, angle: -90, position: "insideLeft" }} />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Area
-                        type="monotone"
-                        dataKey="frequency"
-                        stroke="hsl(var(--primary))"
-                        fillOpacity={1}
-                        fill={`url(#color-${key})`}
-                        name="Frequency"
-                      />
-                      {/* Add threshold reference lines */}
-                      {labels.thresholds.map((threshold) => (
-                        <line
-                          key={threshold.value}
-                          x1={threshold.value}
-                          y1="0%"
-                          x2={threshold.value}
-                          y2="100%"
-                          stroke="hsl(var(--muted-foreground))"
-                          strokeWidth={1}
-                          strokeDasharray="3 3"
-                        />
-                      ))}
-                    </AreaChart>
-                  </ChartContainer>
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold">{labels.title}</h3>
+                  <p className="text-sm text-muted-foreground">{labels.description}</p>
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  {labels.thresholds.map((threshold, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="w-px h-4 bg-muted-foreground"></div>
-                      <span>
-                        {threshold.label} ({threshold.value})
-                      </span>
-                    </div>
-                  ))}
+
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={data}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey={xAxisKey} 
+                        label={{ 
+                          value: labels.xLabel, 
+                          position: "insideBottom", 
+                          offset: -5 
+                        }} 
+                      />
+                      <YAxis
+                        label={{
+                          value: labels.yLabel,
+                          angle: -90,
+                          position: "insideLeft",
+                          offset: -5
+                        }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="averageDepression" 
+                        stroke="hsl(var(--primary, 221 83% 53%))" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </TabsContent>
-            )
+            );
           })}
         </Tabs>
       </CardContent>
     </Card>
-  )
+  );
 }
-

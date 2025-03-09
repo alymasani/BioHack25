@@ -4,11 +4,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
 
-// Mock data for correlation heatmap
+// Mock data for dataset selection
 const datasets = [
-  { id: "dataset1", name: "Clinical Dataset (n=500)" },
-  { id: "dataset2", name: "Survey Dataset (n=1200)" },
-  { id: "dataset3", name: "Longitudinal Study (n=350)" },
+  { id: "dataset1", name: "Mental Health Study on Students" },
+]
+
+// Hard-coded correlation matrix
+const correlationData = [
+  [1.0, -0.08, 0.01, 0.01, -0.0, -0.03, -0.1, -0.23],
+  [-0.08, 1.0, -0.02, -0.12, -0.04, 0.09, 0.15, 0.47],
+  [0.01, -0.02, 1.0, -0.05, -0.0, 0.0, 0.01, 0.02],
+  [0.01, -0.12, -0.05, 1.0, 0.01, -0.04, -0.06, -0.17],
+  [-0.0, -0.04, -0.0, 0.01, 1.0, -0.03, -0.01, -0.09],
+  [-0.03, 0.09, 0.0, -0.04, -0.03, 1.0, 0.07, 0.2],
+  [-0.1, 0.15, 0.01, -0.06, -0.01, 0.07, 1.0, 0.36],
+  [-0.23, 0.47, 0.02, -0.17, -0.09, 0.2, 0.36, 1.0],
+]
+
+const labels = [
+  "Age",
+  "Academic Pressure",
+  "CGPA",
+  "Study Satisfaction",
+  "Sleep Duration",
+  "Work/Study Hours",
+  "Financial Stress",
+  "Depression",
 ]
 
 export function CorrelationHeatmap() {
@@ -35,65 +56,56 @@ export function CorrelationHeatmap() {
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="aspect-square w-full relative">
-          <img
-            src={`/placeholder.svg?height=400&width=400&text=Correlation+Heatmap`}
-            alt="Correlation Heatmap"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="grid grid-cols-5 grid-rows-5 gap-1 w-full h-full p-8">
-              {Array.from({ length: 25 }).map((_, i) => {
-                const row = Math.floor(i / 5)
-                const col = i % 5
-                const isDiagonal = row === col
-                const value = isDiagonal ? 1 : Math.random() * (row === 0 || col === 0 ? 0.8 : 0.6)
-                const opacity = Math.max(0.1, value)
-                const color =
-                  value > 0.7
-                    ? `rgba(220, 38, 38, ${opacity})`
-                    : value > 0.4
-                      ? `rgba(234, 179, 8, ${opacity})`
-                      : value > 0.2
-                        ? `rgba(59, 130, 246, ${opacity})`
-                        : `rgba(107, 114, 128, ${opacity})`
+        {/* Wrapper for the heatmap */}
+        <div className="flex flex-col w-full overflow-auto p-4">
+          {/* Column labels across the top */}
+          <div className="grid grid-cols-9 gap-1 mb-2" style={{ width: "fit-content" }}>
+            <div /> {/* empty top-left corner cell */}
+            {labels.map((label) => (
+              <div key={label} className="text-xs font-medium text-center w-14">
+                {label}
+              </div>
+            ))}
+          </div>
 
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-center text-xs font-medium text-white"
-                    style={{
-                      backgroundColor: color,
-                      borderRadius: "2px",
-                    }}
-                  >
-                    {value.toFixed(2)}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-            <span>Strong Positive</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-500 rounded-sm"></div>
-            <span>Moderate</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-            <span>Weak</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-500 rounded-sm"></div>
-            <span>No Correlation</span>
+          {/* Heatmap rows (with row labels on the left) */}
+          <div className="grid grid-rows-8 gap-y-1" style={{ width: "fit-content" }}>
+            {correlationData.map((row, rowIndex) => (
+              <div key={rowIndex} className="grid grid-cols-9 gap-1" style={{ width: "fit-content" }}>
+                {/* Row label */}
+                <div className="flex items-center justify-end pr-2 text-xs font-medium w-14">
+                  {labels[rowIndex]}
+                </div>
+
+                {/* Correlation cells */}
+                {row.map((value, colIndex) => {
+                  // clamp the alpha so it doesn't go below 0.2
+                  const absValue = Math.abs(value)
+                  const alpha = Math.max(absValue, 0.2) // ensures at least 0.2
+                  const color = value >= 0
+                    ? `rgba(220, 38, 38, ${alpha})` // red for positive
+                    : `rgba(37, 99, 235, ${alpha})`  // blue for negative
+
+                  return (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      className="flex items-center justify-center text-xs font-medium text-white"
+                      style={{
+                        width: "3rem",
+                        height: "3rem",
+                        backgroundColor: color,
+                        borderRadius: 4,
+                      }}
+                    >
+                      {value.toFixed(2)}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>
     </Card>
   )
 }
-
