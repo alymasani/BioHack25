@@ -7,7 +7,15 @@ This project analyzes various factors influencing student mental health using st
 
 ## How to Run the Code
 
-### 1. Backend (FastAPI)
+### 1. BioHack (Jupyter Notebook)
+#### Prerequisites:
+- Python 3.8+
+- Anaconda/ Jupyter Notebook
+
+#### Steps to Run:
+1. Click "run all" from the run tab
+
+### 2. Backend (FastAPI)
 #### Prerequisites:
 - Python 3.8+
 - Install dependencies:
@@ -26,7 +34,7 @@ This project analyzes various factors influencing student mental health using st
    ```
 3. Access API docs at `http://localhost:8000/docs`
 
-### 2. Frontend (Next.js)
+### 3. Frontend (Next.js)
 #### Prerequisites:
 - Node.js 16+
 - Install dependencies:
