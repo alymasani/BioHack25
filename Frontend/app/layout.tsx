@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Depression Prediction Dashboard",
+  title: "Mental Health Analysis for Students",
   description: "Data analysis dashboard for depression prediction models",
     generator: 'v0.dev'
 }

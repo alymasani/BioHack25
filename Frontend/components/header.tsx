@@ -27,7 +27,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-xl hidden md:inline-flex">Depression Analysis</span>
+            <span className="font-bold text-xl hidden md:inline-flex">Mental Health Analysis for Students</span>
             <span className="font-bold text-xl md:hidden">Analysis</span>
           </Link>
         </div>
