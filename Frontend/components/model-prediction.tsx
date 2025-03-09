@@ -1,145 +1,229 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
+import { predictModel } from "@/lib/api";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileUp, Play } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
-import { Progress } from "@/components/ui/progress"
-
-// Mock model features based on model ID
+// Define features for all models
 const modelFeatures = {
-  "1": [
-    { name: "age", label: "Age", type: "number", min: 18, max: 90 },
-    { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    { name: "phq9", label: "PHQ-9 Score", type: "slider", min: 0, max: 27 },
-    { name: "sleep", label: "Sleep Quality", type: "slider", min: 0, max: 10 },
-    { name: "activity", label: "Physical Activity (hours/week)", type: "number", min: 0, max: 40 },
-    { name: "social", label: "Social Support", type: "slider", min: 0, max: 10 },
+  "RandomForest": [
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
   ],
-  "2": [
-    { name: "age", label: "Age", type: "number", min: 18, max: 90 },
-    { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    { name: "phq9", label: "PHQ-9 Score", type: "slider", min: 0, max: 27 },
-    { name: "sleep", label: "Sleep Quality", type: "slider", min: 0, max: 10 },
-    { name: "activity", label: "Physical Activity (hours/week)", type: "number", min: 0, max: 40 },
+  "LogisticRegression": [
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
   ],
-  "3": [
-    { name: "age", label: "Age", type: "number", min: 18, max: 90 },
-    { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    { name: "phq9", label: "PHQ-9 Score", type: "slider", min: 0, max: 27 },
-    { name: "sleep", label: "Sleep Quality", type: "slider", min: 0, max: 10 },
-    { name: "activity", label: "Physical Activity (hours/week)", type: "number", min: 0, max: 40 },
-    { name: "social", label: "Social Support", type: "slider", min: 0, max: 10 },
-    { name: "stress", label: "Stress Level", type: "slider", min: 0, max: 10 },
-  ],
-  "4": [
-    { name: "age", label: "Age", type: "number", min: 18, max: 90 },
-    { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    { name: "phq9", label: "PHQ-9 Score", type: "slider", min: 0, max: 27 },
-    { name: "sleep", label: "Sleep Quality", type: "slider", min: 0, max: 10 },
-    { name: "activity", label: "Physical Activity (hours/week)", type: "number", min: 0, max: 40 },
-    { name: "social", label: "Social Support", type: "slider", min: 0, max: 10 },
-    { name: "stress", label: "Stress Level", type: "slider", min: 0, max: 10 },
-    { name: "diet", label: "Diet Quality", type: "slider", min: 0, max: 10 },
-    { name: "screen", label: "Screen Time (hours/day)", type: "number", min: 0, max: 24 },
-  ],
-}
+  "XGBoost": [
+    { name: "Academic Pressure", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Work/Study Hours", type: "slider", min: 0, max: 40, dataType: "float" },
+    { name: "Financial Stress", type: "slider", min: 0, max: 10, dataType: "float" },
+    { name: "Dietary Habits", type: "select", options: ["Good", "Average", "Poor"], dataType: "int", apiValues: {"Good": 0, "Average": 1, "Poor": 2} },
+    { name: "Sleep Duration", type: "slider", min: 4, max: 10, dataType: "float" },
+    { name: "Family History of Mental Illness", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "Have you ever had suicidal thoughts ?", type: "select", options: ["Yes", "No"], dataType: "int", apiValues: {"Yes": 1, "No": 0} },
+    { name: "CGPA", type: "slider", min: 2, max: 4, dataType: "float" },
+    { name: "Gender", type: "select", options: ["Male", "Female", "Other"], dataType: "int", apiValues: {"Male": 0, "Female": 1, "Other": 2} }
+  ]
+};
 
 export function ModelPrediction({ id }: { id: string }) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
-  const [file, setFile] = useState<File | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<{ probability: number; prediction: string } | null>(null)
-  const { toast } = useToast()
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState<{ probability: number; prediction: string } | null>(null);
+  const { toast } = useToast();
 
-  const features = modelFeatures[id as keyof typeof modelFeatures] || []
+  // Get features for the current model or default to empty array
+  const features = modelFeatures[id as keyof typeof modelFeatures] || [];
+  
+  // Initialize form data with default values
+  useEffect(() => {
+    const initialData: Record<string, any> = {};
+    features.forEach(feature => {
+      if (feature.type === "slider") {
+        initialData[feature.name] = feature.min;
+      } else if (feature.type === "select" && feature.options && feature.options.length > 0) {
+        initialData[feature.name] = feature.options[0];
+      }
+    });
+    setFormData(initialData);
+    
+    // Reset result when model changes
+    setResult(null);
+  }, [id, features]);
 
   const handleInputChange = (name: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    console.log(`✏️ Input Changed: ${name} ->`, value);
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+  // Convert value to the appropriate type and validate
+  const validateAndConvert = (value: any, feature: any): any => {
+    // Handle null/undefined values
+    if (value === null || value === undefined) {
+      console.warn(`Missing value for ${feature.name}, using default`);
+      
+      if (feature.type === "slider") {
+        return feature.min;
+      } else if (feature.type === "select" && feature.options && feature.options.length > 0) {
+        return feature.apiValues?.[feature.options[0]] ?? 0;
+      }
+      return 0;
     }
-  }
+    
+    // Handle categorical values using the apiValues mapping
+    if (feature.apiValues && typeof feature.apiValues === 'object') {
+      const mappedValue = feature.apiValues[value];
+      if (mappedValue !== undefined) {
+        value = mappedValue;
+      } else {
+        console.warn(`No mapping found for ${feature.name}: ${value}, using default 0`);
+        return 0;
+      }
+    }
+    
+    // Convert to the appropriate numeric type
+    if (feature.dataType === 'float') {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        console.error(`Invalid float value for ${feature.name}: ${value}, using default 0`);
+        return 0.0;
+      }
+      return numValue;
+    } else if (feature.dataType === 'int') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) {
+        console.error(`Invalid int value for ${feature.name}: ${value}, using default 0`);
+        return 0;
+      }
+      return numValue;
+    }
+    
+    return value;
+  };
 
-  const handlePredict = () => {
-    // Check if all required fields are filled
-    const missingFields = features.filter(
-      (feature) => formData[feature.name] === undefined || formData[feature.name] === "",
-    )
+  const handlePredict = async () => {
+    console.log("🔄 Predict button clicked!");
 
-    if (missingFields.length > 0 && !file) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all fields or upload a dataset",
-        variant: "destructive",
-      })
-      return
+    // Ensure all required fields are filled
+    const missingFields = features.filter(feature => formData[feature.name] === undefined);
+    if (missingFields.length > 0) {
+      console.log("⚠️ Missing Fields:", missingFields.map(f => f.name));
+      toast({ 
+        title: "Missing Information", 
+        description: `Please fill in: ${missingFields.map(f => f.name).join(', ')}`, 
+        variant: "destructive" 
+      });
+      return;
     }
 
-    setIsProcessing(true)
-    setProgress(0)
+    setIsProcessing(true);
+    setProgress(0);
+    
+    // Simulate progress while API call is happening
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        const newProgress = Math.min(prev + 10, 90);
+        return newProgress;
+      });
+    }, 200);
 
-    // Simulate prediction process
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsProcessing(false)
+    try {
+      // Build a payload that exactly matches what the backend expects
+      const apiPayload: Record<string, any> = {};
+      
+      // Process each feature with proper validation and conversion
+      features.forEach(feature => {
+        const value = validateAndConvert(formData[feature.name], feature);
+        apiPayload[feature.name] = value;
+      });
+      
+      console.log("📡 Sending API request with:", { model_id: id, features: apiPayload });
+      console.log("Final API payload:", JSON.stringify(apiPayload));
 
-          // Generate a random prediction result
-          const probability = Math.random()
-          setResult({
-            probability: probability,
-            prediction: probability > 0.5 ? "Depression Likely" : "Depression Unlikely",
-          })
+      // Make the API call
+      const prediction = await predictModel(id, apiPayload);
+      console.log("✅ Prediction Response:", prediction);
 
-          return 100
-        }
-        return prev + 10
-      })
-    }, 300)
-  }
+      // Set result and complete progress
+      setResult(prediction);
+      setProgress(100);
+      
+      // Show success toast
+      toast({ 
+        title: "Prediction Complete", 
+        description: `Result: ${prediction.prediction}`, 
+      });
+    } catch (error) {
+      console.error("❌ Prediction Error:", error);
+      toast({ 
+        title: "Prediction Failed", 
+        description: "An error occurred during prediction. Check console for details.", 
+        variant: "destructive" 
+      });
+    } finally {
+      clearInterval(progressInterval);
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>Run Prediction</CardTitle>
-        <CardDescription>Enter patient data or upload a dataset to predict depression risk</CardDescription>
+        <CardTitle>Run Prediction with {id}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {features.map((feature) => (
           <div key={feature.name} className="space-y-2">
-            <Label htmlFor={feature.name}>{feature.label}</Label>
+            <Label htmlFor={feature.name}>{feature.name}</Label>
 
-            {feature.type === "number" && (
-              <Input
-                id={feature.name}
-                type="number"
-                min={feature.min}
-                max={feature.max}
-                value={formData[feature.name] || ""}
-                onChange={(e) => handleInputChange(feature.name, e.target.value)}
-              />
+            {feature.type === "slider" && (
+              <div className="space-y-2">
+                <Slider
+                  id={feature.name}
+                  min={feature.min}
+                  max={feature.max}
+                  step={0.1}
+                  value={[formData[feature.name] || feature.min]}
+                  onValueChange={(value) => handleInputChange(feature.name, value[0])}
+                />
+                <div className="flex justify-between">
+                  <span className="text-sm">{feature.min}</span>
+                  <span className="text-sm font-medium">{formData[feature.name]?.toFixed(1) || feature.min}</span>
+                  <span className="text-sm">{feature.max}</span>
+                </div>
+              </div>
             )}
 
             {feature.type === "select" && (
-              <Select
-                value={formData[feature.name] || ""}
+              <Select 
+                value={formData[feature.name] || ""} 
                 onValueChange={(value) => handleInputChange(feature.name, value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={`Select ${feature.label}`} />
+                  <SelectValue placeholder={`Select ${feature.name}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {feature.options?.map((option) => (
@@ -150,95 +234,26 @@ export function ModelPrediction({ id }: { id: string }) {
                 </SelectContent>
               </Select>
             )}
-
-            {feature.type === "slider" && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Low ({feature.min})</span>
-                  <span>High ({feature.max})</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Slider
-                    id={feature.name}
-                    min={feature.min}
-                    max={feature.max}
-                    step={1}
-                    value={[formData[feature.name] || feature.min]}
-                    onValueChange={(value) => handleInputChange(feature.name, value[0])}
-                  />
-                  <span className="w-12 text-center font-medium">{formData[feature.name] || feature.min}</span>
-                </div>
-              </div>
-            )}
           </div>
         ))}
 
-        <div className="space-y-2 pt-2">
-          <div className="flex items-center">
-            <div className="h-px flex-1 bg-muted"></div>
-            <span className="px-2 text-xs text-muted-foreground">OR</span>
-            <div className="h-px flex-1 bg-muted"></div>
-          </div>
-
-          <Label htmlFor="dataset-upload">Upload Dataset</Label>
-          <div className="flex items-center gap-2">
-            <Input id="dataset-upload" type="file" className="hidden" onChange={handleFileChange} accept=".csv,.json" />
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => document.getElementById("dataset-upload")?.click()}
-            >
-              <FileUp className="h-4 w-4 mr-2" />
-              {file ? file.name : "Upload CSV or JSON"}
-            </Button>
-          </div>
-        </div>
-
-        {isProcessing && (
-          <div className="space-y-2">
-            <Label>Processing</Label>
-            <Progress value={progress} />
-            <p className="text-xs text-muted-foreground text-center">Analyzing data and generating prediction...</p>
-          </div>
-        )}
-
+        {isProcessing && <Progress value={progress} />}
         {result && !isProcessing && (
-          <div className="space-y-2 border rounded-lg p-4">
+          <div className="border rounded-lg p-4">
             <h4 className="font-medium">Prediction Result</h4>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Depression Probability:</span>
-              <span className="font-medium">{(result.probability * 100).toFixed(1)}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2.5">
-              <div
-                className={`h-2.5 rounded-full ${
-                  result.probability > 0.7 ? "bg-red-500" : result.probability > 0.4 ? "bg-yellow-500" : "bg-green-500"
-                }`}
-                style={{ width: `${result.probability * 100}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-sm">Prediction:</span>
-              <span
-                className={`font-medium ${
-                  result.prediction === "Depression Likely"
-                    ? "text-red-500 dark:text-red-400"
-                    : "text-green-500 dark:text-green-400"
-                }`}
-              >
-                {result.prediction}
-              </span>
-            </div>
+            <p className="text-lg">{(result.probability * 100).toFixed(1)}% Chance of Depression</p>
+            <p className={`font-medium ${result.probability > 0.5 ? "text-red-500" : "text-green-500"}`}>
+              {result.prediction}
+            </p>
           </div>
         )}
       </CardContent>
-      <CardFooter>
+      <div className="p-4">
         <Button className="w-full" onClick={handlePredict} disabled={isProcessing}>
           <Play className="h-4 w-4 mr-2" />
           {isProcessing ? "Processing..." : "Run Prediction"}
         </Button>
-      </CardFooter>
+      </div>
     </Card>
-  )
+  );
 }
-

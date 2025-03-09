@@ -1,30 +1,35 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Eye, BarChart } from "lucide-react"
-import Link from "next/link"
-
-// Mock data for models
-const models = [
-  {
-    id: "1",
-    name: "Random Forest Classifier",
-    accuracy: 0.89,
-    date: "2025-03-08",
-    description: "Ensemble learning method for classification that operates by constructing multiple decision trees.",
-  },
-  {
-    id: "2",
-    name: "Logistic Regression",
-    accuracy: 0.82,
-    date: "2023-11-20",
-    description: "Statistical model that uses a logistic function to model a binary dependent variable.",
-  },
- 
-]
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Eye, BarChart } from "lucide-react";
+import Link from "next/link";
+import { fetchModels } from "@/lib/api";
 
 export function ModelsList() {
+  const [models, setModels] = useState<{ id: string; name: string; accuracy: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadModels() {
+      try {
+        const data = await fetchModels();
+        setModels(data);
+      } catch (err) {
+        setError("Failed to load models");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadModels();
+  }, []);
+
+  if (loading) return <p>Loading models...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+
   return (
     <Card className="col-span-1">
       <CardHeader>
@@ -41,9 +46,7 @@ export function ModelsList() {
                   {(model.accuracy * 100).toFixed(1)}% Accuracy
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">{model.description}</p>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-muted-foreground">Created: {model.date}</span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/models/${model.id}`}>
@@ -64,6 +67,5 @@ export function ModelsList() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-
